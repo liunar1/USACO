@@ -1,92 +1,67 @@
 # USACO 2020 Bronze Problem 3
 num_cows = int(input())
-cows = []
-graze = []
-amount_eaten = []
 
+cows = []
 east_cows = []
 north_cows = []
 
+class Cow:
+    def __init__(self, direction: str, x, y, cow_id):
+        self.direction = direction
+        self.x = x
+        self.y = y
+        self.cow_id = cow_id
+        self.eaten = "Infinity" # we will use this for max eaten
+        self.halted = False # if this statement is true, the cow would've intercepted another cow but it is stopped short so it won't
+
 for i in range(num_cows):
     info = input().split()
-    info[1] = int(info[1]) # x coordinate
-    info[2] = int(info[2]) # y coordinate
-    info.append("Infinity") # number of grass cells eaten
-    info.append(i) # cow number 
-    amount_eaten.append("Infinity")
+    # 0 is direction, 1 is x coord, 2 is y coord, and i is cow id
+    cow = Cow(info[0], int(info[1]), int(info[2]), i)
     if info[0] == 'E':
-        east_cows.append(info)
+        east_cows.append(cow)
     else:
-        north_cows.append(info)
+        north_cows.append(cow)
+    cows.append(cow)
 
-print(east_cows)
-print(north_cows)
+# what we do is we sort the cows so that its closest to farthest (I used insertion sort)
+for i in range(1, len(north_cows)):
+    index = i
+    while(index > 0 and north_cows[index].x < north_cows[index - 1].x):
+        temp = north_cows[index]
+        north_cows[index] = north_cows[index - 1]
+        north_cows[index - 1] = temp
+        index -= 1
+for i in range(1, len(east_cows)):
+    index = i
+    while(index > 0 and east_cows[index].y < east_cows[index - 1].y):
+        temp = east_cows[index]
+        east_cows[index] = east_cows[index - 1]
+        east_cows[index - 1] = temp
+        index -= 1
 
-# fix this for loop: instead of checking who arrives at the intersection first, we need to see if a cow has multiple 
-# intersections, and remove the farthest intersection (since the cow will never get there)
 for i in range(len(north_cows)):
     for j in range(len(east_cows)):
+        if north_cows[i].y < east_cows[j].y and north_cows[i].x > east_cows[j].x and not east_cows[j].halted:
         # if north cow higher than east cow or north cow west of east cow, the cows will never intersect
-        if north_cows[i][2] < east_cows[j][2] and north_cows[i][1] > east_cows[j][1]:
-            # meet at north cow's x coordinate and east cow's y coordinate
-            intersection = (north_cows[i][1], east_cows[j][2]) 
+        # meet at north cow's x coordinate and east cow's y coordinate
+            intersection = (north_cows[i].x, east_cows[j].y) 
             # if distance between east cow and x coordinate is larger than north cow and y coordinate, east cow will be screwed
             # and north cow has potential to keep moving and vice versa
             # if cows get there at the same time we don't care
-            x_distance = intersection[0] - east_cows[j][1]
-            y_distance = intersection[1] - north_cows[i][2]
-            if x_distance > y_distance:
-                if east_cows[j][3] == "Infinity" or x_distance < east_cows[j][3]:
-                    east_cows[j][3] = x_distance
-                    amount_eaten[east_cows[j][4]] = east_cows[j][3]
-            elif x_distance < y_distance:
-                if north_cows[i][3] == "Infinity" or y_distance < north_cows[i][3]:
-                    north_cows[i][3] = y_distance
-                    amount_eaten[north_cows[i][4]] = north_cows[i][3]
-            print(f"north cow starts at {(north_cows[i][1], north_cows[i][2])} and east cow starts at {(east_cows[j][1], east_cows[j][2])}")
-            print(f"Intersect at {intersection} and east cow is {x_distance} from it while north cow is {y_distance} from it")
-            print(" ")
-                
-for i in range(len(amount_eaten)):
-    print(amount_eaten[i])
+            x_distance = intersection[0] - east_cows[j].x
+            y_distance = intersection[1] - north_cows[i].y
+            if x_distance > y_distance: # north screws east cow (unless north cow is screwed or east cow is long screwed already)
+                east_cows[j].halted = True
+                east_cows[j].eaten = x_distance
+                cows[east_cows[j].cow_id].eaten = x_distance
+            elif x_distance < y_distance: # north screwed by east (unless east cow already screwed)
+                north_cows[i].eaten = y_distance
+                cows[north_cows[i].cow_id].eaten = y_distance
+                north_cows[i].halted = True
+                break # no point in checking other eastern cows because the north cow is already halted
+            else: # nothing happens when two cows arrive at the same cell
+                pass
 
-#########################################################################
-
-# for i in range(num_cows):
-#     info = input().split()
-#     info[1] = int(info[1])
-#     info[2] = int(info[2])
-#     info.append(0)
-#     cows.append(info)
-#     graze.append(True)
-#     amount_eaten.append(0)
-
-# eaten_coords = []
-
-# count = 0
-# while any(graze) and count < 1000000000:
-#     temp_eaten = []
-#     for i in range(len(cows)):
-#         cow_coords = (cows[i][1], cows[i][2])
-#         if graze[i]:
-#             if cow_coords in eaten_coords:
-#                 graze[i] = False
-#                 amount_eaten[i] = cows[i][3]
-#             else:
-#                 temp_eaten.append(cow_coords)
-#                 cows[i][3] += 1
-#                 if cows[i][0] == 'E': # east
-#                     cows[i][1] += 1
-#                 else: # north
-#                     cows[i][2] += 1
-#                 if cows[i][3] >= 1000000000:
-#                     cows[i][3] = "Infinity"
-#                     amount_eaten[i] = cows[i][3]
-#     for i in range(len(temp_eaten)):
-#         eaten_coords.append(temp_eaten[i])
-#     count += 1
-
-# # all we need to add is instead of a 100 limit, we check to see which 
-
-# for i in range(num_cows):
-#     print(amount_eaten[i])
+for i in range(len(cows)):
+    print(cows[i].eaten)
