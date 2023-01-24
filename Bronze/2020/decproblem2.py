@@ -1,6 +1,4 @@
 # USACO 2020 Bronze Problem 2
-from collections import Counter
-
 flowers = input()
 petals = list(map(int, input().split()))
 avg = len(petals)
